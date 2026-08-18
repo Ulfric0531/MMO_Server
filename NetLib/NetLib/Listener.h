@@ -19,7 +19,7 @@ public:
 
 private:
 	SOCKET			_listenSock;
-	NetAddr			_serverAddr;
+	SOCKADDR_IN		_serverAddr;
 	HANDLE			_acceptIocp;
 	OverlappedEx	_acceptOverlapped;
 	OverlappedEx	_disconnectOverlapped;

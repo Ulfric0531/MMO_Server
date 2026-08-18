@@ -13,7 +13,6 @@
 #pragma comment(lib, "ws2_32.lib")
 
 #include "Overloading.h"
-#include "NetAddr.h"
 #include "Session.h"
 #include "Listener.h"
 #include "OverlappedEx.h"

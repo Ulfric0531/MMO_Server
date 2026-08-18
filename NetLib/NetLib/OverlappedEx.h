@@ -15,6 +15,7 @@ public:
 	~OverlappedEx();
 
 	IoType_t	GetIoType();
+	void		Init();
 
 private:
 	IoType_t		_ioType;

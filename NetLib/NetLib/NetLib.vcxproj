@@ -159,10 +159,8 @@
     <ClInclude Include="Global.h" />
     <ClInclude Include="Iocp.h" />
     <ClInclude Include="Listener.h" />
-    <ClInclude Include="Managers.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
-    <ClInclude Include="NetAddr.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="OverlappedEx.h" />
     <ClInclude Include="Overloading.h" />
@@ -182,10 +180,8 @@
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="Iocp.cpp" />
     <ClCompile Include="Listener.cpp" />
-    <ClCompile Include="Managers.cpp" />
     <ClCompile Include="MemoryManager.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
-    <ClCompile Include="NetAddr.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="OverlappedEx.cpp" />
     <ClCompile Include="pch.cpp">

@@ -39,9 +39,6 @@
     <ClInclude Include="Allocator.h">
       <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Managers.h">
-      <Filter>Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Export.h">
       <Filter>Export</Filter>
     </ClInclude>
@@ -61,9 +58,6 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Session.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="NetAddr.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Overloading.h">
@@ -104,9 +98,6 @@
     <ClCompile Include="Allocator.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
-    <ClCompile Include="Managers.cpp">
-      <Filter>Managers</Filter>
-    </ClCompile>
     <ClCompile Include="Export.cpp">
       <Filter>Export</Filter>
     </ClCompile>
@@ -126,9 +117,6 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Session.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="NetAddr.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="SendBuffer.cpp">

@@ -13,3 +13,13 @@ IoType_t OverlappedEx::GetIoType()
 {
 	return _ioType;
 }
+
+void OverlappedEx::Init()
+{
+	// OVERLAPPED
+	hEvent = 0;
+	Offset = 0;
+	OffsetHigh = 0;
+	Internal = 0;
+	InternalHigh = 0;
+}

@@ -11,6 +11,7 @@ public:
 	int		GetFreeSize();
 	void	ClearBuffer();
 	char*	GetBufferPtr();
+	char*	GetRearPtr();
 
 	bool	Peek(char* elementDst, int elementSize);
 	bool	MoveFront(int elementSize);

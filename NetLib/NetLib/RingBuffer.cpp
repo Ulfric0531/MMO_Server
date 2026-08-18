@@ -49,7 +49,12 @@ void RingBuffer::ClearBuffer()
 
 char* RingBuffer::GetBufferPtr()
 {
-	return nullptr;
+	return _buffer;
+}
+
+char* RingBuffer::GetRearPtr()
+{
+	return _buffer + _rear;
 }
 
 int RingBuffer::DirectEnqueueSize()
