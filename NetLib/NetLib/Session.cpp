@@ -4,7 +4,7 @@ Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	: _socket(socket)
 	, _addr(addr)
 	, _id(0)
-	, _isConnected(1)
+	, _isConnected(true)
 	, _refCount(1)
 	, _recvOverlap(OverlappedEx(IOTYPE_RECV))
 	, _sendOverlap(OverlappedEx(IOTYPE_SEND))
@@ -25,34 +25,23 @@ SOCKET Session::GetSockHandle()
 
 void Session::IncreaseRefCount()
 {
-	InterlockedIncrement(&_refCount);
+	_refCount.fetch_add(1);
 }
 
 void Session::DecreaseRefCount()
 {
-	InterlockedDecrement(&_refCount);
+	_refCount.fetch_sub(1);
 }
 
 void Session::RecvReserveTask()
 {
-
-}
-
-void Session::SendReserveTask()
-{
-
-}
-
-void Session::DisconnectReserveTask()
-{
-	if (InterlockedExchange(&_isConnected, 1) == 1)
+	if (_isConnected.load() == false)
 	{
 		return;
 	}
-}
 
-void Session::RecvCompletionTask(unsigned int completedBytes)
-{
+	IncreaseRefCount();
+
 	int errCode = 0;
 	int retVal = 0;
 	unsigned long numOfBytes = 0;
@@ -74,9 +63,34 @@ void Session::RecvCompletionTask(unsigned int completedBytes)
 		errCode = WSAGetLastError();
 		if (errCode != WSA_IO_PENDING)
 		{
+			DecreaseRefCount();
+
 			DisconnectReserveTask();
 		}
 	}
+}
+
+void Session::SendReserveTask()
+{
+	if (_isConnected.load() == false)
+	{
+		return;
+	}
+
+	IncreaseRefCount();
+}
+
+void Session::DisconnectReserveTask()
+{
+	if (_isConnected.load() == false)
+	{
+		return;
+	}
+}
+
+void Session::RecvCompletionTask(unsigned int completedBytes)
+{
+
 
 	RecvReserveTask();
 }

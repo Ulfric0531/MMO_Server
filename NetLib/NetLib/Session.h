@@ -24,18 +24,16 @@ public:
 	void DisconnectCompletionTask();
 
 private:
-	unsigned long long	_id;
-	SendBuffer*			_sendPendingList;
-	SOCKET				_socket;
-	SOCKADDR_IN			_addr;
-	RingBuffer			_recvBuffer;
-	OverlappedEx		_recvOverlap;
-	OverlappedEx		_sendOverlap;
-	OverlappedEx		_disconnectOverlap;
+	unsigned long long		_id;
+	atomic<unsigned int>	_refCount;
+	atomic<bool>			_isConnected;
+	SendBuffer*				_sendPendingList;
+	SOCKET					_socket;
+	SOCKADDR_IN				_addr;
+	RingBuffer				_recvBuffer;
+	OverlappedEx			_recvOverlap;
+	OverlappedEx			_sendOverlap;
+	OverlappedEx			_disconnectOverlap;
 
-	__declspec(align(64))volatile long _isConnected;
-	__declspec(align(64))volatile long _refCount;
-
-	
 };
 
