@@ -13,6 +13,7 @@ SendBuffer::SendBuffer()
 	, _maxBufferSize(DEFAULT_SENDBUF_SIZE)
 	, _buffer(nullptr)
 	, _owner(nullptr)
+	, _next(nullptr)
 {
 
 }
@@ -23,6 +24,7 @@ SendBuffer::SendBuffer(unsigned int bufferSize)
 	, _maxBufferSize(bufferSize)
 	, _buffer(nullptr)
 	, _owner(nullptr)
+	, _next(nullptr)
 {
 
 }
@@ -55,4 +57,14 @@ unsigned int SendBuffer::GetFreeSize()
 unsigned int SendBuffer::GetCurrentSize()
 {
 	return unsigned int();
+}
+
+void SendBuffer::SetNextNode(SendBuffer* next)
+{
+	_next = next;
+}
+
+SendBuffer* SendBuffer::GetNextNode()
+{
+	return _next;
 }

@@ -16,7 +16,7 @@ public:
 	void DecreaseRefCount();
 
 	void RecvReserveTask();
-	void SendReserveTask();
+	void SendReserveTask(SendBuffer* sendBuffer);
 	void DisconnectReserveTask();
 
 	void RecvCompletionTask(unsigned int completedBytes);
@@ -27,13 +27,17 @@ private:
 	unsigned long long		_id;
 	atomic<unsigned int>	_refCount;
 	atomic<bool>			_isConnected;
-	SendBuffer*				_sendPendingList;
+	atomic<bool>			_onSend;
 	SOCKET					_socket;
 	SOCKADDR_IN				_addr;
 	RingBuffer				_recvBuffer;
 	OverlappedEx			_recvOverlap;
 	OverlappedEx			_sendOverlap;
 	OverlappedEx			_disconnectOverlap;
+private:
+	SendBuffer* _sendPendingListHead;
+	SendBuffer* _sendPendingListTail;
+	SRWLOCK		_pendingListLock;
 
 };
 

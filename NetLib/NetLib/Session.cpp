@@ -9,6 +9,8 @@ Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	, _recvOverlap(OverlappedEx(IOTYPE_RECV))
 	, _sendOverlap(OverlappedEx(IOTYPE_SEND))
 	, _disconnectOverlap(OverlappedEx(IOTYPE_DISCONNECT))
+	, _sendPendingListHead(nullptr)
+	, _sendPendingListTail(nullptr)
 {
 
 }
@@ -70,14 +72,52 @@ void Session::RecvReserveTask()
 	}
 }
 
-void Session::SendReserveTask()
+void Session::SendReserveTask(SendBuffer* sendBuffer)
 {
 	if (_isConnected.load(memory_order_relaxed) == false)
 	{
 		return;
 	}
 
+	if (_onSend.load(memory_order_relaxed) == true)
+	{
+		AcquireSRWLockExclusive(&_pendingListLock);
+		if (_sendPendingListHead == nullptr)
+		{
+			_sendPendingListHead = sendBuffer;
+			_sendPendingListTail = sendBuffer;
+			ReleaseSRWLockExclusive(&_pendingListLock);
+			return;
+		}
+		_sendPendingListTail->SetNextNode(sendBuffer);
+		_sendPendingListTail = sendBuffer;
+		ReleaseSRWLockExclusive(&_pendingListLock);
+		return;
+	}
+
 	IncreaseRefCount();
+
+	int errCode = 0;
+	int retVal = 0;
+	unsigned long numOfBytes = 0;
+	unsigned long flags = 0;
+
+	_sendOverlap.Init();
+	WSABUF wsabuf;
+	wsabuf.buf = sendBuffer->GetBufferPtr();
+	wsabuf.len = sendBuffer->GetCurrentSize();
+
+	retVal = WSASend(_socket, &wsabuf, 1, &numOfBytes, flags, reinterpret_cast<LPOVERLAPPED>(&_sendOverlap), nullptr);
+	if (retVal == SOCKET_ERROR)
+	{
+		errCode = WSAGetLastError();
+		if (errCode != WSA_IO_PENDING)
+		{
+			DecreaseRefCount();
+
+			DisconnectReserveTask();
+		}
+	}
 }
 
 void Session::DisconnectReserveTask()

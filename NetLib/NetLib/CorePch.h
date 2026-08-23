@@ -19,6 +19,7 @@
 #include "OverlappedEx.h"
 #include "Iocp.h"
 #include "RingBuffer.h"
+#include "SendBuffer.h"
 
 
 using namespace std;

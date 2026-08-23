@@ -15,6 +15,9 @@ public:
 
 	unsigned int	GetFreeSize();
 	unsigned int	GetCurrentSize();
+public:
+	void		SetNextNode(SendBuffer* next);
+	SendBuffer* GetNextNode();
 
 private:
 	char*				_buffer;
@@ -22,5 +25,7 @@ private:
 	unsigned int		_front;
 	unsigned int		_rear;
 	unsigned int		_maxBufferSize;
+private:
+	SendBuffer* _next; // for session send pending list.
 
 };
