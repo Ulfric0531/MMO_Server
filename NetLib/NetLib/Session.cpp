@@ -35,7 +35,7 @@ void Session::DecreaseRefCount()
 
 void Session::RecvReserveTask()
 {
-	if (_isConnected.load() == false)
+	if (_isConnected.load(memory_order_relaxed) == false)
 	{
 		return;
 	}
@@ -72,7 +72,7 @@ void Session::RecvReserveTask()
 
 void Session::SendReserveTask()
 {
-	if (_isConnected.load() == false)
+	if (_isConnected.load(memory_order_relaxed) == false)
 	{
 		return;
 	}
@@ -82,7 +82,7 @@ void Session::SendReserveTask()
 
 void Session::DisconnectReserveTask()
 {
-	if (_isConnected.load() == false)
+	if (_isConnected.exchange(false) == false)
 	{
 		return;
 	}
