@@ -1,4 +1,6 @@
 #include "pch.h"
+#include "OverlappedEx.h"
+#include "SendBuffer.h"
 
 Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	: _socket(socket)
@@ -11,13 +13,14 @@ Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	, _disconnectOverlap(OverlappedEx(IOTYPE_DISCONNECT))
 	, _sendPendingListHead(nullptr)
 	, _sendPendingListTail(nullptr)
+	, _recvBuffer(RingBuffer(4096))
 {
 
 }
 
 Session::~Session()
 {
-
+	
 }
 
 SOCKET Session::GetSockHandle()
@@ -35,7 +38,7 @@ void Session::DecreaseRefCount()
 	_refCount.fetch_sub(1);
 }
 
-void Session::RecvReserveTask()
+void Session::RecvReserveProc()
 {
 	if (_isConnected.load(memory_order_relaxed) == false)
 	{
@@ -67,18 +70,19 @@ void Session::RecvReserveTask()
 		{
 			DecreaseRefCount();
 
-			DisconnectReserveTask();
+			DisconnectReserveProc();
 		}
 	}
 }
 
-void Session::SendReserveTask(SendBuffer* sendBuffer)
+void Session::SendReserveProc(SendBuffer* sendBuffer)
 {
 	if (_isConnected.load(memory_order_relaxed) == false)
 	{
 		return;
 	}
 
+	
 	if (_onSend.load(memory_order_relaxed) == true)
 	{
 		AcquireSRWLockExclusive(&_pendingListLock);
@@ -86,6 +90,7 @@ void Session::SendReserveTask(SendBuffer* sendBuffer)
 		{
 			_sendPendingListHead = sendBuffer;
 			_sendPendingListTail = sendBuffer;
+
 			ReleaseSRWLockExclusive(&_pendingListLock);
 			return;
 		}
@@ -94,7 +99,7 @@ void Session::SendReserveTask(SendBuffer* sendBuffer)
 		ReleaseSRWLockExclusive(&_pendingListLock);
 		return;
 	}
-
+	
 	IncreaseRefCount();
 
 	int errCode = 0;
@@ -103,11 +108,27 @@ void Session::SendReserveTask(SendBuffer* sendBuffer)
 	unsigned long flags = 0;
 
 	_sendOverlap.Init();
-	WSABUF wsabuf;
-	wsabuf.buf = sendBuffer->GetBufferPtr();
-	wsabuf.len = sendBuffer->GetCurrentSize();
 
-	retVal = WSASend(_socket, &wsabuf, 1, &numOfBytes, flags, reinterpret_cast<LPOVERLAPPED>(&_sendOverlap), nullptr);
+	AcquireSRWLockExclusive(&_pendingListLock);
+	unsigned long count = _pendingListCount;
+
+	_sendOverlap._onFlightList = _sendPendingListHead;
+	_sendPendingListHead = nullptr;
+	_sendPendingListTail = nullptr;
+	ReleaseSRWLockExclusive(&_pendingListLock);
+
+	WSABUF* wsabuf = reinterpret_cast<WSABUF*>(PoolAllocator::Allocate(sizeof(WSABUF) * count));
+	SendBuffer* onFlightBuffer = _sendOverlap._onFlightList;
+	for (int i = 0; i < count; ++i)
+	{
+		wsabuf[i].buf = onFlightBuffer->GetBufferPtr();
+		wsabuf[i].len = onFlightBuffer->GetCurrentSize();
+		onFlightBuffer = _sendOverlap._onFlightList->GetNextNode();
+	}
+
+	retVal = WSASend(_socket, wsabuf, count, &numOfBytes, flags, reinterpret_cast<LPOVERLAPPED>(&_sendOverlap), nullptr);
+	PoolAllocator::Release(wsabuf);
+
 	if (retVal == SOCKET_ERROR)
 	{
 		errCode = WSAGetLastError();
@@ -115,34 +136,41 @@ void Session::SendReserveTask(SendBuffer* sendBuffer)
 		{
 			DecreaseRefCount();
 
-			DisconnectReserveTask();
+			DisconnectReserveProc();
 		}
 	}
 }
 
-void Session::DisconnectReserveTask()
+void Session::DisconnectReserveProc()
 {
 	if (_isConnected.exchange(false) == false)
 	{
 		return;
 	}
+
+	int errCode = 0;
+	int retVal = 0;
+	unsigned long numOfBytes = 0;
+	unsigned long flags = 0;
+
+	retVal = WinSockEx::DisconnectEx(_socket, reinterpret_cast<LPOVERLAPPED>(&_disconnectOverlap), flags, 0);
 }
 
-void Session::RecvCompletionTask(unsigned int completedBytes)
+void Session::RecvCompletionProc(unsigned int completedBytes)
 {
 
 
-	RecvReserveTask();
+	RecvReserveProc();
 }
 
-void Session::SendCompletionTask(unsigned int completedBytes)
+void Session::SendCompletionProc(unsigned int completedBytes)
 {
 	int errCode;
 	int retVal;
 
 }
 
-void Session::DisconnectCompletionTask()
+void Session::DisconnectCompletionProc()
 {
 
 }

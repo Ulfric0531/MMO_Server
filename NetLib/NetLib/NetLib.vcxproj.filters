@@ -81,6 +81,9 @@
     <ClInclude Include="RingBuffer.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="JhNet_Include.h">
+      <Filter>Export</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -136,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="RingBuffer.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="JhNet_Include.cpp">
+      <Filter>Export</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

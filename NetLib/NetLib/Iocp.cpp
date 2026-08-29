@@ -26,10 +26,10 @@ void Iocp::DispatchIocpQueue()
 		case IOTYPE_DISCONNECT:
 			break;
 		case IOTYPE_RECV:
-			session->RecvCompletionTask(static_cast<unsigned int>(completedBytes));
+			session->RecvCompletionProc(static_cast<unsigned int>(completedBytes));
 			break;
 		case IOTYPE_SEND:
-			session->SendCompletionTask(static_cast<unsigned int>(completedBytes));
+			session->SendCompletionProc(static_cast<unsigned int>(completedBytes));
 			break;
 		default:
 			break;

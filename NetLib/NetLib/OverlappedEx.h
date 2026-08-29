@@ -8,6 +8,7 @@ enum IoType_t
 	IOTYPE_DISCONNECT
 };
 
+
 class OverlappedEx : public OVERLAPPED
 {
 public:
@@ -17,7 +18,8 @@ public:
 	IoType_t	GetIoType();
 	void		Init();
 
-private:
-	IoType_t		_ioType;
+public:
+	IoType_t	_ioType;
+	SendBuffer* _onFlightList;
 };
 

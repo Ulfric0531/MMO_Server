@@ -18,6 +18,9 @@ public:
 	bool	MoveRear(int elementSize);
 	int		DirectEnqueueSize(void);
 	int		DirectDequeueSize(void);
+public:
+	void		SetNextNode(RingBuffer* next);
+	RingBuffer* GetNextNode();
 
 
 private:
@@ -26,5 +29,7 @@ private:
 	int		_rear;
 	int		_currentBufferSize;
 	int		_maxBufferSize;
+private:
+	RingBuffer* _next; // for send pending list.
 };
 

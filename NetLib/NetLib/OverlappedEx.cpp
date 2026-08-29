@@ -2,6 +2,7 @@
 
 OverlappedEx::OverlappedEx(IoType_t ioType)
 	: _ioType(ioType)
+	, _onFlightList(nullptr)
 {
 	memset(this, 0, sizeof(OVERLAPPED));
 }

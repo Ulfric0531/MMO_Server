@@ -158,6 +158,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="Iocp.h" />
+    <ClInclude Include="JhNet_Include.h" />
     <ClInclude Include="Listener.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="Iocp.cpp" />
+    <ClCompile Include="JhNet_Include.cpp" />
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="MemoryManager.cpp" />
     <ClCompile Include="MemoryPool.cpp" />

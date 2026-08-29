@@ -15,13 +15,13 @@ public:
 	void IncreaseRefCount();
 	void DecreaseRefCount();
 
-	void RecvReserveTask();
-	void SendReserveTask(SendBuffer* sendBuffer);
-	void DisconnectReserveTask();
+	void RecvReserveProc();
+	void SendReserveProc(SendBuffer* sendBuffer);
+	void DisconnectReserveProc();
 
-	void RecvCompletionTask(unsigned int completedBytes);
-	void SendCompletionTask(unsigned int completedBytes);
-	void DisconnectCompletionTask();
+	void RecvCompletionProc(unsigned int completedBytes);
+	void SendCompletionProc(unsigned int completedBytes);
+	void DisconnectCompletionProc();
 
 private:
 	unsigned long long		_id;
@@ -35,9 +35,10 @@ private:
 	OverlappedEx			_sendOverlap;
 	OverlappedEx			_disconnectOverlap;
 private:
-	SendBuffer* _sendPendingListHead;
-	SendBuffer* _sendPendingListTail;
-	SRWLOCK		_pendingListLock;
+	SendBuffer*		_sendPendingListHead;
+	SendBuffer*		_sendPendingListTail;
+	unsigned int	_pendingListCount;
+	SRWLOCK			_pendingListLock;
 
 };
 

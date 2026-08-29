@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "SendBufferChunk.h"
 
-#define DEFAULT_SENDBUFCHUNK_SIZE (1024 * 10)
+#define DEFAULT_SENDBUFCHUNK_SIZE (1024 * 100)
 
 SendBufferChunk::SendBufferChunk()
 	: _chunk(nullptr)

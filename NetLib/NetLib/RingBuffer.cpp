@@ -77,6 +77,16 @@ int RingBuffer::DirectDequeueSize()
 	return _maxBufferSize - _front;
 }
 
+void RingBuffer::SetNextNode(RingBuffer* next)
+{
+	_next = next;
+}
+
+RingBuffer* RingBuffer::GetNextNode()
+{
+	return _next;
+}
+
 bool RingBuffer::MoveFront(int elementSize)
 {
 	if (_currentBufferSize <= 0)
