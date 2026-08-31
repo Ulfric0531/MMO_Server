@@ -48,7 +48,7 @@
     <ClInclude Include="Listener.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkManager.h">
+    <ClInclude Include="NetManager.h">
       <Filter>Managers</Filter>
     </ClInclude>
     <ClInclude Include="OverlappedEx.h">
@@ -110,7 +110,7 @@
     <ClCompile Include="Listener.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="NetworkManager.cpp">
+    <ClCompile Include="NetManager.cpp">
       <Filter>Managers</Filter>
     </ClCompile>
     <ClCompile Include="OverlappedEx.cpp">

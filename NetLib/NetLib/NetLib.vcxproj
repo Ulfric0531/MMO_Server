@@ -162,7 +162,7 @@
     <ClInclude Include="Listener.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
-    <ClInclude Include="NetworkManager.h" />
+    <ClInclude Include="NetManager.h" />
     <ClInclude Include="OverlappedEx.h" />
     <ClInclude Include="Overloading.h" />
     <ClInclude Include="pch.h" />
@@ -184,7 +184,7 @@
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="MemoryManager.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
+    <ClCompile Include="NetManager.cpp" />
     <ClCompile Include="OverlappedEx.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
