@@ -39,14 +39,8 @@
     <ClInclude Include="Allocator.h">
       <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="Export.h">
-      <Filter>Export</Filter>
-    </ClInclude>
     <ClInclude Include="SpinLock.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Listener.h">
-      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="NetManager.h">
       <Filter>Managers</Filter>
@@ -101,14 +95,8 @@
     <ClCompile Include="Allocator.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
-    <ClCompile Include="Export.cpp">
-      <Filter>Export</Filter>
-    </ClCompile>
     <ClCompile Include="SpinLock.cpp">
       <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Listener.cpp">
-      <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="NetManager.cpp">
       <Filter>Managers</Filter>

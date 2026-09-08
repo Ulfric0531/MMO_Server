@@ -55,3 +55,18 @@ NetManager::NetManager(WCHAR* serverIp, unsigned short serverPort, unsigned int 
 	}
 
 }
+
+void NetManager::AddSession(Session* session)
+{
+
+}
+
+void NetManager::TryDeleteSession(unsigned int index, unsigned int id)
+{
+
+}
+
+Session* NetManager::GetSessionOrNull(unsigned int index)
+{
+	return nullptr;
+}

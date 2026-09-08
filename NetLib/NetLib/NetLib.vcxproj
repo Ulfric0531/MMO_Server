@@ -154,12 +154,10 @@
   <ItemGroup>
     <ClInclude Include="Allocator.h" />
     <ClInclude Include="CorePch.h" />
-    <ClInclude Include="Export.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="Iocp.h" />
     <ClInclude Include="JhNet_Include.h" />
-    <ClInclude Include="Listener.h" />
     <ClInclude Include="MemoryManager.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="NetManager.h" />
@@ -177,11 +175,9 @@
     <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="CorePch.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Export.cpp" />
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="Iocp.cpp" />
     <ClCompile Include="JhNet_Include.cpp" />
-    <ClCompile Include="Listener.cpp" />
     <ClCompile Include="MemoryManager.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="NetManager.cpp" />

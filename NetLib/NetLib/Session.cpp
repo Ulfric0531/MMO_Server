@@ -83,7 +83,7 @@ void Session::SendReserveProc(SendBuffer* sendBuffer)
 	}
 
 	
-	if (_onSend.load(memory_order_relaxed) == true)
+	if (_onSend.load(memory_order_relaxed) == true) // CAS로 변경
 	{
 		AcquireSRWLockExclusive(&_pendingListLock);
 		if (_sendPendingListHead == nullptr)
@@ -106,16 +106,19 @@ void Session::SendReserveProc(SendBuffer* sendBuffer)
 	int retVal = 0;
 	unsigned long numOfBytes = 0;
 	unsigned long flags = 0;
-
+	unsigned int count = 0;
 	_sendOverlap.Init();
 
-	AcquireSRWLockExclusive(&_pendingListLock);
-	unsigned long count = _pendingListCount;
+	{
+		AcquireSRWLockExclusive(&_pendingListLock);
+		count = _pendingListCount;
 
-	_sendOverlap._onFlightList = _sendPendingListHead;
-	_sendPendingListHead = nullptr;
-	_sendPendingListTail = nullptr;
-	ReleaseSRWLockExclusive(&_pendingListLock);
+		_sendOverlap._onFlightList = _sendPendingListHead;
+		_sendPendingListHead = nullptr;
+		_sendPendingListTail = nullptr;
+
+		ReleaseSRWLockExclusive(&_pendingListLock);
+	}
 
 	WSABUF* wsabuf = reinterpret_cast<WSABUF*>(PoolAllocator::Allocate(sizeof(WSABUF) * count));
 	SendBuffer* onFlightBuffer = _sendOverlap._onFlightList;
