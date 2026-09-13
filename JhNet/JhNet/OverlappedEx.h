@@ -1,5 +1,7 @@
 #pragma once
 
+class SendBuffer;
+
 enum IoType_t
 {
 	IOTYPE_RECV,

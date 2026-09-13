@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.37111.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetLib", "NetLib\NetLib.vcxproj", "{886465FB-147B-4987-B4B1-4371EED987C6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JhNet", "JhNet\JhNet.vcxproj", "{886465FB-147B-4987-B4B1-4371EED987C6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLLtest", "DLLtest\DLLtest.vcxproj", "{9DA85ACD-33A8-4C56-BA58-CDE4853060AA}"
 EndProject

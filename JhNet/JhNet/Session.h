@@ -1,8 +1,11 @@
 #pragma once
 
+#include "RingBuffer.h"
+#include <atomic>
 class OverlappedEx;
 class SendBuffer;
-class RingBuffer;
+
+using namespace std;
 
 class Session
 {
@@ -41,4 +44,3 @@ private:
 	SRWLOCK			_pendingListLock;
 
 };
-
