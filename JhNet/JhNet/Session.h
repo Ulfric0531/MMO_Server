@@ -26,8 +26,10 @@ public:
 	void SendCompletionProc(unsigned int completedBytes);
 	void DisconnectCompletionProc();
 
+	unsigned long long GetId();
 private:
 	unsigned long long		_id;
+	unsigned int			_index;
 	atomic<unsigned int>	_refCount;
 	atomic<bool>			_isConnected;
 	atomic<bool>			_onSend;

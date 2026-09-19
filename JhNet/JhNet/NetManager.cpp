@@ -54,19 +54,55 @@ NetManager::NetManager(WCHAR* serverIp, unsigned short serverPort, unsigned int 
 		wcout << L"Listen Socket Reuse Address setsockopt() error : " << errCode << endl;
 	}
 
+//--------------------------
+//	  Init WinSockEx
+//--------------------------
+	GUID connectExID = WSAID_CONNECTEX;
+	GUID disconnectExID = WSAID_DISCONNECTEX;
+	GUID acceptExID = WSAID_ACCEPTEX;
+	DWORD bytes;
+	SOCKET dummySock = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+	WSAIoctl(dummySock, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectExID, sizeof(connectExID), &WinSockEx::ConnectEx, sizeof(WinSockEx::ConnectEx), &bytes, NULL, NULL);
+	WSAIoctl(dummySock, SIO_GET_EXTENSION_FUNCTION_POINTER, &disconnectExID, sizeof(disconnectExID), &WinSockEx::DisconnectEx, sizeof(WinSockEx::DisconnectEx), &bytes, NULL, NULL);
+	WSAIoctl(dummySock, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptExID, sizeof(acceptExID), &WinSockEx::AcceptEx, sizeof(WinSockEx::AcceptEx), &bytes, NULL, NULL);
 }
 
-void NetManager::AddSession(Session* session)
-{
 
+int NetManager::AddSession(Session* session)
+{
+	int index = -1;
+	AcquireSRWLockExclusive(&_sessionListLock);
+	for (int i = 0; i < _maxSessionCount; ++i)
+	{
+		if (_sessionList[i] == nullptr)
+		{
+			_sessionList[i] = session;
+			index = i;
+			break;
+		}
+	}
+	ReleaseSRWLockExclusive(&_sessionListLock);
+	return index;
 }
 
-void NetManager::TryDeleteSession(unsigned int index, unsigned int id)
+void NetManager::TryDeleteSession(unsigned int sessionIndex, unsigned long long sessionId)
 {
-
+	AcquireSRWLockExclusive(&_sessionListLock);
+	ReleaseSRWLockExclusive(&_sessionListLock);
 }
 
-Session* NetManager::GetSessionOrNull(unsigned int index)
+void NetManager::Send(SendBuffer* buffer, unsigned int size, unsigned int sessionIndex, unsigned long long sessionId)
 {
-	return nullptr;
+	Session* session;
+	AcquireSRWLockShared(&_sessionListLock);
+	session = _sessionList[sessionIndex];
+	if (session == nullptr || session->GetId() != sessionId)
+	{
+		goto exit;
+	}
+
+	// 아예 send 등록까지 ㅇㅇ
+exit:
+	ReleaseSRWLockShared(&_sessionListLock);
+
 }

@@ -177,3 +177,8 @@ void Session::DisconnectCompletionProc()
 {
 
 }
+
+unsigned long long Session::GetId()
+{
+	return _id;
+}
