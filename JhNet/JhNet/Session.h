@@ -18,30 +18,33 @@ public:
 	void IncreaseRefCount();
 	void DecreaseRefCount();
 
-	void RecvReserveProc();
-	void SendReserveProc(SendBuffer* sendBuffer);
-	void DisconnectReserveProc();
+	void RecvPost();
+	void TrySendPost(char* buffer, unsigned int size);
+	void SendPost();
+	void DisconnectPost();
 
-	void RecvCompletionProc(unsigned int completedBytes);
-	void SendCompletionProc(unsigned int completedBytes);
-	void DisconnectCompletionProc();
+	void RecvComplete(unsigned int completedBytes);
+	void SendComplete(unsigned int completedBytes);
+	void DisconnectComplete();
 
 	unsigned long long GetId();
 private:
+	SRWLOCK					_sendBufferLock;
 	unsigned long long		_id;
-	unsigned int			_index;
-	atomic<unsigned int>	_refCount;
-	atomic<bool>			_isConnected;
-	atomic<bool>			_onSend;
 	SOCKET					_socket;
 	SOCKADDR_IN				_addr;
 	RingBuffer				_recvBuffer;
+	RingBuffer				_sendBuffer;
 	OverlappedEx			_recvOverlap;
 	OverlappedEx			_sendOverlap;
 	OverlappedEx			_disconnectOverlap;
+	unsigned int			_index;
+	volatile long			_refCount;
+	volatile long			_isConnected;
+	volatile long			_onSend;
 private:
-	SendBuffer*		_sendPendingListHead;
-	SendBuffer*		_sendPendingListTail;
+	char*			_sendPendingListHead;
+	char*			_sendPendingListTail;
 	unsigned int	_pendingListCount;
 	SRWLOCK			_pendingListLock;
 

@@ -87,6 +87,53 @@ RingBuffer* RingBuffer::GetNextNode()
 	return _next;
 }
 
+bool RingBuffer::Enqueue(char* elementSrc, int elementSize)
+{
+	if (GetFreeSize() < elementSize)
+	{
+		return false;
+	}
+
+	if (DirectEnqueueSize() >= elementSize)
+	{
+		memcpy(_buffer + _rear, elementSrc, elementSize);
+		_rear = (_rear + elementSize) % _maxBufferSize;
+		_currentBufferSize += elementSize;
+		return true;
+	}
+
+	int directEnqueueSize = DirectEnqueueSize();
+	memcpy(_buffer + _rear, elementSrc, directEnqueueSize);
+	_rear = 0;
+	memcpy(_buffer + _rear, elementSrc + directEnqueueSize, elementSize - directEnqueueSize);
+	_currentBufferSize += elementSize;
+	_rear = (_rear + elementSize - directEnqueueSize) % _maxBufferSize;
+	return true;
+}
+
+bool RingBuffer::Dequeue(char* elementDst, int elementSize)
+{
+	if (elementSize > _currentBufferSize)
+	{
+		return false;
+	}
+
+	if (DirectDequeueSize() >= elementSize)
+	{
+		memcpy(elementDst, _buffer + _front, elementSize);
+		_front = (_front + elementSize) % _maxBufferSize;
+		_currentBufferSize -= elementSize;
+		return true;
+	}
+	int directDequeueSize = DirectDequeueSize();
+	memcpy(elementDst, _buffer + _front, directDequeueSize);
+	_front = 0;
+	memcpy(elementDst + directDequeueSize, _buffer + _front, elementSize - directDequeueSize);
+	_currentBufferSize -= elementSize;
+	_front = (_front + elementSize - directDequeueSize) % _maxBufferSize;
+	return true;
+}
+
 bool RingBuffer::MoveFront(int elementSize)
 {
 	if (_currentBufferSize <= 0)

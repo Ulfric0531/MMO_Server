@@ -13,6 +13,8 @@ public:
 	char*	GetBufferPtr();
 	char*	GetRearPtr();
 
+	bool	Enqueue(char* elementSrc, int elementSize);
+	bool	Dequeue(char* elementDst, int elementSize);
 	bool	Peek(char* elementDst, int elementSize);
 	bool	MoveFront(int elementSize);
 	bool	MoveRear(int elementSize);

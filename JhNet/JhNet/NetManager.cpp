@@ -78,9 +78,10 @@ int NetManager::AddSession(Session* session)
 		{
 			_sessionList[i] = session;
 			index = i;
-			break;
+			goto exit;
 		}
 	}
+exit:
 	ReleaseSRWLockExclusive(&_sessionListLock);
 	return index;
 }
@@ -101,7 +102,8 @@ void NetManager::Send(SendBuffer* buffer, unsigned int size, unsigned int sessio
 		goto exit;
 	}
 
-	// 아예 send 등록까지 ㅇㅇ
+	session->SendPost(buffer);
+
 exit:
 	ReleaseSRWLockShared(&_sessionListLock);
 

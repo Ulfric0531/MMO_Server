@@ -14,6 +14,7 @@ Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	, _sendPendingListHead(nullptr)
 	, _sendPendingListTail(nullptr)
 	, _recvBuffer(RingBuffer(4096))
+	, _sendBuffer(RingBuffer(16000))
 {
 
 }
@@ -30,17 +31,17 @@ SOCKET Session::GetSockHandle()
 
 void Session::IncreaseRefCount()
 {
-	_refCount.fetch_add(1);
+	InterlockedIncrement(&_refCount);
 }
 
 void Session::DecreaseRefCount()
 {
-	_refCount.fetch_sub(1);
+	InterlockedDecrement(&_refCount);
 }
 
-void Session::RecvReserveProc()
+void Session::RecvPost()
 {
-	if (_isConnected.load(memory_order_relaxed) == false)
+	if (InterlockedCompareExchange(&_isConnected, 0, 0) == 0)
 	{
 		return;
 	}
@@ -70,20 +71,72 @@ void Session::RecvReserveProc()
 		{
 			DecreaseRefCount();
 
-			DisconnectReserveProc();
+			DisconnectPost();
 		}
 	}
 }
 
-void Session::SendReserveProc(SendBuffer* sendBuffer)
+void Session::TrySendPost(char* buffer, unsigned int size)
 {
-	if (_isConnected.load(memory_order_relaxed) == false)
+	if (InterlockedCompareExchange(&_isConnected, 0, 0) == 0)
 	{
 		return;
 	}
 
-	
-	if (_onSend.load(memory_order_relaxed) == true) // CAS로 변경
+	int freeSize;
+
+	{
+		AcquireSRWLockExclusive(&_sendBufferLock);
+		freeSize = _sendBuffer.GetFreeSize();
+		if (freeSize < size)
+		{
+			ReleaseSRWLockExclusive(&_sendBufferLock);
+			goto BufferIsFull;
+		}
+
+		_sendBuffer.Enqueue(buffer, size);
+		ReleaseSRWLockExclusive(&_sendBufferLock);
+	}
+
+	goto TryPost;
+
+BufferIsFull:
+	{
+		AcquireSRWLockExclusive(&_pendingListLock);
+		if (_sendPendingListHead == nullptr)
+		{
+			_sendPendingListHead = buffer;
+			_sendPendingListTail = buffer;
+
+			ReleaseSRWLockExclusive(&_pendingListLock);
+			return;
+		}
+		_sendPendingListTail->SetNextNode(sendBuffer);
+		_sendPendingListTail = sendBuffer;
+		ReleaseSRWLockExclusive(&_pendingListLock);
+	}
+	return;
+
+TryPost:
+	if (InterlockedCompareExchange(&_onSend, 1, 0) == 1)
+	{
+		return;
+	}
+
+	SendPost();
+Exit:
+}
+
+void Session::SendPost()
+{
+	if (InterlockedCompareExchange(&_isConnected, 0, 0) == 0)
+	{
+		return;
+	}
+
+
+	/*
+	if (InterlockedCompareExchange(&_onSend, 1, 0) == 1)
 	{
 		AcquireSRWLockExclusive(&_pendingListLock);
 		if (_sendPendingListHead == nullptr)
@@ -99,7 +152,7 @@ void Session::SendReserveProc(SendBuffer* sendBuffer)
 		ReleaseSRWLockExclusive(&_pendingListLock);
 		return;
 	}
-	
+	*/
 	IncreaseRefCount();
 
 	int errCode = 0;
@@ -139,14 +192,14 @@ void Session::SendReserveProc(SendBuffer* sendBuffer)
 		{
 			DecreaseRefCount();
 
-			DisconnectReserveProc();
+			DisconnectPost();
 		}
 	}
 }
 
-void Session::DisconnectReserveProc()
+void Session::DisconnectPost()
 {
-	if (_isConnected.exchange(false) == false)
+	if (InterlockedExchange(&_isConnected, 0) == 0)
 	{
 		return;
 	}
@@ -159,21 +212,21 @@ void Session::DisconnectReserveProc()
 	retVal = WinSockEx::DisconnectEx(_socket, reinterpret_cast<LPOVERLAPPED>(&_disconnectOverlap), flags, 0);
 }
 
-void Session::RecvCompletionProc(unsigned int completedBytes)
+void Session::RecvComplete(unsigned int completedBytes)
 {
 
 
-	RecvReserveProc();
+	RecvPost();
 }
 
-void Session::SendCompletionProc(unsigned int completedBytes)
+void Session::SendComplete(unsigned int completedBytes)
 {
 	int errCode;
 	int retVal;
 
 }
 
-void Session::DisconnectCompletionProc()
+void Session::DisconnectComplete()
 {
 
 }

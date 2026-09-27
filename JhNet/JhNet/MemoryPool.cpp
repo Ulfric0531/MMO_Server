@@ -70,32 +70,10 @@ void MemoryPool::Push(MemoryHeader* ptr)
 	_poolHead.next = ptr;
 	++_freeCount;
 	ReleaseSpinLock(&_poolLock);
-	
-	// InterlockedPushEntrySList(&_header, (SLIST_ENTRY*)(ptr));
 }
 
 MemoryHeader* MemoryPool::Pop()
 {
-	/*
-	MemoryHeader* header = (MemoryHeader*)InterlockedPopEntrySList(&_header); // temp;
-	if (header == nullptr)
-	{
-		AcquireSpinLock(&_arenaLock);
-		void* ptr = _arenaHead.next->arena + _arenaPos;
-		_arenaPos += _bucketSize + sizeof(MemoryHeader);
-		if (_arenaSize - _arenaPos < (_bucketSize + sizeof(MemoryHeader)))
-		{
-			Arena* newArena = new Arena();
-			newArena->arena = CommitArena();
-			newArena->next = _arenaHead.next;
-			_arenaHead.next = newArena;
-			_arenaPos = 0;
-		}
-		ReleaseSpinLock(&_arenaLock);
-		return reinterpret_cast<MemoryHeader*>(ptr);
-	}
-	*/
-	
 	AcquireSpinLock(&_poolLock);
 	MemoryHeader* header = _poolHead.next;
 	if (header == nullptr)
@@ -110,14 +88,14 @@ MemoryHeader* MemoryPool::Pop()
 			_arenaHead.next = newArena;
 			_arenaPos = 0;
 		}
-		ReleaseSpinLock(&_poolLock);
-		return reinterpret_cast<MemoryHeader*>(ptr);
+		header = reinterpret_cast<MemoryHeader*>(ptr);
+		goto exit;
 	}
 	_poolHead.next = header->next;
 	--_freeCount;
-	ReleaseSpinLock(&_poolLock);
-	
 
+exit:
+	ReleaseSpinLock(&_poolLock);
 	return header;
 }
 
