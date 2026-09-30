@@ -7,6 +7,13 @@ class SendBuffer;
 
 using namespace std;
 
+struct EmergencyBuffer
+{
+	char*				buffer;
+	unsigned int		size;
+	EmergencyBuffer*	next;
+};
+
 class Session
 {
 public:
@@ -43,9 +50,9 @@ private:
 	volatile long			_isConnected;
 	volatile long			_onSend;
 private:
-	char*			_sendPendingListHead;
-	char*			_sendPendingListTail;
-	unsigned int	_pendingListCount;
-	SRWLOCK			_pendingListLock;
+	EmergencyBuffer*	_emergencyBufferHead;
+	EmergencyBuffer*	_emergencyBufferTail;
+	unsigned int		_emergencyBufferCount;
+	SRWLOCK				_emergencyBufferLock;
 
 };

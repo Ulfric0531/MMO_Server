@@ -11,8 +11,8 @@ Session::Session(SOCKET socket, SOCKADDR_IN addr, unsigned long long id)
 	, _recvOverlap(OverlappedEx(IOTYPE_RECV))
 	, _sendOverlap(OverlappedEx(IOTYPE_SEND))
 	, _disconnectOverlap(OverlappedEx(IOTYPE_DISCONNECT))
-	, _sendPendingListHead(nullptr)
-	, _sendPendingListTail(nullptr)
+	, _emergencyBufferHead(nullptr)
+	, _emergencyBufferTail(nullptr)
 	, _recvBuffer(RingBuffer(4096))
 	, _sendBuffer(RingBuffer(16000))
 {
@@ -78,12 +78,12 @@ void Session::RecvPost()
 
 void Session::TrySendPost(char* buffer, unsigned int size)
 {
+	int freeSize;
+
 	if (InterlockedCompareExchange(&_isConnected, 0, 0) == 0)
 	{
 		return;
 	}
-
-	int freeSize;
 
 	{
 		AcquireSRWLockExclusive(&_sendBufferLock);
@@ -98,32 +98,34 @@ void Session::TrySendPost(char* buffer, unsigned int size)
 		ReleaseSRWLockExclusive(&_sendBufferLock);
 	}
 
-	goto TryPost;
-
-BufferIsFull:
-	{
-		AcquireSRWLockExclusive(&_pendingListLock);
-		if (_sendPendingListHead == nullptr)
-		{
-			_sendPendingListHead = buffer;
-			_sendPendingListTail = buffer;
-
-			ReleaseSRWLockExclusive(&_pendingListLock);
-			return;
-		}
-		_sendPendingListTail->SetNextNode(sendBuffer);
-		_sendPendingListTail = sendBuffer;
-		ReleaseSRWLockExclusive(&_pendingListLock);
-	}
-	return;
-
-TryPost:
 	if (InterlockedCompareExchange(&_onSend, 1, 0) == 1)
 	{
 		return;
 	}
 
 	SendPost();
+	goto Exit;
+
+BufferIsFull:
+	{
+		EmergencyBuffer* sendBuffer = reinterpret_cast<EmergencyBuffer*>(PoolAllocator::Allocate(sizeof(EmergencyBuffer)));
+		sendBuffer->buffer = buffer;
+		sendBuffer->size = size;
+		sendBuffer->next = nullptr;
+		AcquireSRWLockExclusive(&_emergencyBufferLock);
+		if (_emergencyBufferHead == nullptr)
+		{
+			_emergencyBufferHead = sendBuffer;
+			_emergencyBufferTail = sendBuffer;
+
+			ReleaseSRWLockExclusive(&_emergencyBufferLock);
+			return;
+		}
+		_emergencyBufferTail->next = sendBuffer;
+		_emergencyBufferTail = sendBuffer;
+		ReleaseSRWLockExclusive(&_emergencyBufferLock);
+	}
+	return;
 Exit:
 }
 
@@ -134,55 +136,52 @@ void Session::SendPost()
 		return;
 	}
 
-
-	/*
-	if (InterlockedCompareExchange(&_onSend, 1, 0) == 1)
-	{
-		AcquireSRWLockExclusive(&_pendingListLock);
-		if (_sendPendingListHead == nullptr)
-		{
-			_sendPendingListHead = sendBuffer;
-			_sendPendingListTail = sendBuffer;
-
-			ReleaseSRWLockExclusive(&_pendingListLock);
-			return;
-		}
-		_sendPendingListTail->SetNextNode(sendBuffer);
-		_sendPendingListTail = sendBuffer;
-		ReleaseSRWLockExclusive(&_pendingListLock);
-		return;
-	}
-	*/
 	IncreaseRefCount();
 
 	int errCode = 0;
 	int retVal = 0;
+	int idx = 0;
+	int directDequeueSize;
+	int remainSize;
 	unsigned long numOfBytes = 0;
 	unsigned long flags = 0;
 	unsigned int count = 0;
 	_sendOverlap.Init();
 
 	{
-		AcquireSRWLockExclusive(&_pendingListLock);
-		count = _pendingListCount;
+		AcquireSRWLockExclusive(&_emergencyBufferLock);
 
-		_sendOverlap._onFlightList = _sendPendingListHead;
-		_sendPendingListHead = nullptr;
-		_sendPendingListTail = nullptr;
+		if (_emergencyBufferHead != nullptr)
+		{
+			count = _emergencyBufferCount;
 
-		ReleaseSRWLockExclusive(&_pendingListLock);
+			_sendOverlap._onFlightList = _emergencyBufferHead;
+			_emergencyBufferHead = nullptr;
+			_emergencyBufferTail = nullptr;
+			_emergencyBufferCount = 0;
+		}
+
+		ReleaseSRWLockExclusive(&_emergencyBufferLock);
 	}
 
-	WSABUF* wsabuf = reinterpret_cast<WSABUF*>(PoolAllocator::Allocate(sizeof(WSABUF) * count));
-	SendBuffer* onFlightBuffer = _sendOverlap._onFlightList;
-	for (int i = 0; i < count; ++i)
+	WSABUF* wsabuf = reinterpret_cast<WSABUF*>(PoolAllocator::Allocate(sizeof(WSABUF) * count + 2));
+	EmergencyBuffer* onFlightBuffer = _sendOverlap._onFlightList;
+	while (onFlightBuffer != nullptr)
 	{
-		wsabuf[i].buf = onFlightBuffer->GetBufferPtr();
-		wsabuf[i].len = onFlightBuffer->GetCurrentSize();
-		onFlightBuffer = _sendOverlap._onFlightList->GetNextNode();
+		wsabuf[idx].buf = onFlightBuffer->buffer;
+		wsabuf[idx].len = onFlightBuffer->size;
+		onFlightBuffer = onFlightBuffer->next;
 	}
 
-	retVal = WSASend(_socket, wsabuf, count, &numOfBytes, flags, reinterpret_cast<LPOVERLAPPED>(&_sendOverlap), nullptr);
+	directDequeueSize = _sendBuffer.DirectDequeueSize();
+	remainSize = _sendBuffer.GetBufferSize() - directDequeueSize;
+	wsabuf[idx].buf = _sendBuffer.GetBufferPtr();
+	wsabuf[idx].len = directDequeueSize;
+	_sendBuffer.MoveFront(directDequeueSize);
+	wsabuf[idx + 1].buf = _sendBuffer.GetBufferPtr();
+	wsabuf[idx + 1].len = remainSize;
+
+	retVal = WSASend(_socket, wsabuf, count + 2, &numOfBytes, flags, reinterpret_cast<LPOVERLAPPED>(&_sendOverlap), nullptr);
 	PoolAllocator::Release(wsabuf);
 
 	if (retVal == SOCKET_ERROR)

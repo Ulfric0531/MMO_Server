@@ -1,6 +1,6 @@
 #pragma once
 
-class SendBuffer;
+class EmergencyBuffer;
 
 enum IoType_t
 {
@@ -21,7 +21,7 @@ public:
 	void		Init();
 
 public:
-	IoType_t	_ioType;
-	SendBuffer* _onFlightList;
+	IoType_t			_ioType;
+	EmergencyBuffer*	_onFlightList;
 };
 
