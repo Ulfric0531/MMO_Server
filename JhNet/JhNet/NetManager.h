@@ -9,7 +9,7 @@ public:
 
 	int			AddSession(Session* session);
 	void		TryDeleteSession(unsigned int sessionIndex, unsigned long long sessionId);
-	void		Send(SendBuffer* buffer, unsigned int size, unsigned int sessionIndex, unsigned long long sessionId);
+	void		Send(char* buffer, unsigned int size, unsigned int sessionIndex, unsigned long long sessionId);
 
 private:
 	SOCKET			_listenSock;

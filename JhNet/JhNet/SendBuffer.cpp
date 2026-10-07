@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "SendBuffer.h"
 
-#define DEFAULT_SENDBUF_SIZE (8192)
+#define DEFAULT_SENDBUF_SIZE (4096)
 
 //---------------------
 //		SendBuffer
@@ -13,7 +13,6 @@ SendBuffer::SendBuffer()
 	, _maxBufferSize(DEFAULT_SENDBUF_SIZE)
 	, _buffer(nullptr)
 	, _owner(nullptr)
-	, _next(nullptr)
 {
 
 }
@@ -21,10 +20,9 @@ SendBuffer::SendBuffer()
 SendBuffer::SendBuffer(unsigned int bufferSize)
 	: _front(0)
 	, _rear(0)
-	, _maxBufferSize(bufferSize)
+	, _maxBufferSize(bufferSize + 1)
 	, _buffer(nullptr)
 	, _owner(nullptr)
-	, _next(nullptr)
 {
 
 }

@@ -1,55 +1,67 @@
 #include "pch.h"
 #include "RingBuffer.h"
 
-RingBuffer::RingBuffer()
-	: _front(0)
-	, _rear(0)
-	, _currentBufferSize(0)
-	, _maxBufferSize(1024)
-{
-	_buffer = new char[1024];
-}
-
 RingBuffer::RingBuffer(int bufferSize)
 	: _front(0)
 	, _rear(0)
-	, _currentBufferSize(0)
-	, _maxBufferSize(bufferSize)
+	, _maxBufferSize(bufferSize + 1)
 {
-	_buffer = new char[bufferSize];
+	_buffer = reinterpret_cast<char*>(PoolAllocator::Allocate(bufferSize + 1));
 }
 
 RingBuffer::~RingBuffer()
 {
-
+	PoolAllocator::Release(_buffer);
 }
 
-int RingBuffer::GetBufferSize()
+int RingBuffer::GetCurrentSize()
 {
-	return _currentBufferSize;
+	if (_front <= _rear)
+	{
+		return _rear - _front;
+	}
+	return _maxBufferSize - _front + _rear;
 }
 
 int RingBuffer::GetFreeSize()
 {
-	return _maxBufferSize - _currentBufferSize;
+	if (_front <= _rear)
+	{
+		return (_maxBufferSize - 1) - (_rear - _front);
+	}
+	return _front - _rear - 1;
 }
 
 bool RingBuffer::Peek(char* elementDst, int elementSize)
 {
-	if (elementSize > _currentBufferSize)
+	if (elementSize > GetCurrentSize())
 	{
 		return false;
 	}
+
+	if (DirectDequeueSize() >= elementSize)
+	{
+		memcpy(elementDst, _buffer + _front, elementSize);
+		return true;
+	}
+	int dummyFront = _front;
+	int directDequeueSize = DirectDequeueSize();
+
+	memcpy(elementDst, _buffer + dummyFront, directDequeueSize);
+	dummyFront = 0;
+	memcpy(elementDst + directDequeueSize, _buffer + dummyFront, elementSize - directDequeueSize);
+	return true;
 }
 
 void RingBuffer::ClearBuffer()
 {
-	_currentBufferSize = 0;
+	_front = 0;
+	_rear = 0;
 }
 
-char* RingBuffer::GetBufferPtr()
+char* RingBuffer::GetFrontPtr()
 {
-	return _buffer;
+	return _buffer + _front;
 }
 
 char* RingBuffer::GetRearPtr()
@@ -59,32 +71,22 @@ char* RingBuffer::GetRearPtr()
 
 int RingBuffer::DirectEnqueueSize()
 {
-	if (_rear >= _front)
+	if (_front <= _rear)
 	{
-		return _maxBufferSize - _rear;
+		return _maxBufferSize - _rear - 1;
 	}
 
-	return GetFreeSize();
+	return _front - _rear - 1;
 }
 
 int RingBuffer::DirectDequeueSize()
 {
-	if (_rear >= _front)
+	if (_front <= _rear)
 	{
-		return _currentBufferSize;
+		return GetCurrentSize();
 	}
 
-	return _maxBufferSize - _front;
-}
-
-void RingBuffer::SetNextNode(RingBuffer* next)
-{
-	_next = next;
-}
-
-RingBuffer* RingBuffer::GetNextNode()
-{
-	return _next;
+	return _maxBufferSize - _front - 1;
 }
 
 bool RingBuffer::Enqueue(char* elementSrc, int elementSize)
@@ -98,7 +100,6 @@ bool RingBuffer::Enqueue(char* elementSrc, int elementSize)
 	{
 		memcpy(_buffer + _rear, elementSrc, elementSize);
 		_rear = (_rear + elementSize) % _maxBufferSize;
-		_currentBufferSize += elementSize;
 		return true;
 	}
 
@@ -106,14 +107,13 @@ bool RingBuffer::Enqueue(char* elementSrc, int elementSize)
 	memcpy(_buffer + _rear, elementSrc, directEnqueueSize);
 	_rear = 0;
 	memcpy(_buffer + _rear, elementSrc + directEnqueueSize, elementSize - directEnqueueSize);
-	_currentBufferSize += elementSize;
 	_rear = (_rear + elementSize - directEnqueueSize) % _maxBufferSize;
 	return true;
 }
 
 bool RingBuffer::Dequeue(char* elementDst, int elementSize)
 {
-	if (elementSize > _currentBufferSize)
+	if (elementSize > GetCurrentSize())
 	{
 		return false;
 	}
@@ -122,32 +122,30 @@ bool RingBuffer::Dequeue(char* elementDst, int elementSize)
 	{
 		memcpy(elementDst, _buffer + _front, elementSize);
 		_front = (_front + elementSize) % _maxBufferSize;
-		_currentBufferSize -= elementSize;
 		return true;
 	}
+
 	int directDequeueSize = DirectDequeueSize();
 	memcpy(elementDst, _buffer + _front, directDequeueSize);
 	_front = 0;
 	memcpy(elementDst + directDequeueSize, _buffer + _front, elementSize - directDequeueSize);
-	_currentBufferSize -= elementSize;
 	_front = (_front + elementSize - directDequeueSize) % _maxBufferSize;
 	return true;
 }
 
 bool RingBuffer::MoveFront(int elementSize)
 {
-	if (_currentBufferSize <= 0)
+	if (GetCurrentSize() <= 0)
 	{
 		return false;
 	}
 
-	if (_currentBufferSize < elementSize)
+	if (GetCurrentSize() < elementSize)
 	{
 		return false;
 	}
 
 	_front = (_front + elementSize) % _maxBufferSize;
-	_currentBufferSize -= elementSize;
 
 	return true;
 }
@@ -160,7 +158,6 @@ bool RingBuffer::MoveRear(int elementSize)
 	}
 
 	_rear = (_rear + elementSize) % _maxBufferSize;
-	_currentBufferSize += elementSize;
 
 	return true;
 }

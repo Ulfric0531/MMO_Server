@@ -92,7 +92,7 @@ void NetManager::TryDeleteSession(unsigned int sessionIndex, unsigned long long 
 	ReleaseSRWLockExclusive(&_sessionListLock);
 }
 
-void NetManager::Send(SendBuffer* buffer, unsigned int size, unsigned int sessionIndex, unsigned long long sessionId)
+void NetManager::Send(char* buffer, unsigned int size, unsigned int sessionIndex, unsigned long long sessionId)
 {
 	Session* session;
 	AcquireSRWLockShared(&_sessionListLock);
@@ -102,7 +102,7 @@ void NetManager::Send(SendBuffer* buffer, unsigned int size, unsigned int sessio
 		goto exit;
 	}
 
-	session->SendPost(buffer);
+	session->TrySendPost(buffer, size);
 
 exit:
 	ReleaseSRWLockShared(&_sessionListLock);

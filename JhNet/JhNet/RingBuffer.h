@@ -3,14 +3,14 @@
 class RingBuffer
 {
 public:
-	RingBuffer();
+	RingBuffer() = delete;
 	RingBuffer(int bufferSize);
 	~RingBuffer();
 
-	int		GetBufferSize();
+	int		GetCurrentSize();
 	int		GetFreeSize();
 	void	ClearBuffer();
-	char*	GetBufferPtr();
+	char*	GetFrontPtr();
 	char*	GetRearPtr();
 
 	bool	Enqueue(char* elementSrc, int elementSize);
@@ -29,9 +29,6 @@ private:
 	char*	_buffer;
 	int		_front;
 	int		_rear;
-	int		_currentBufferSize;
 	int		_maxBufferSize;
-private:
-	RingBuffer* _next; // for send pending list.
 };
 
